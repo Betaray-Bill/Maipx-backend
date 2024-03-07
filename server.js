@@ -7,6 +7,8 @@ import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 import materialRoutes from './routes/masterialRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import companyRoutes from './routes/companyRoutes.js';
+
+// PORT number
 const port = process.env.PORT || 4000;
 
 connectDB();
