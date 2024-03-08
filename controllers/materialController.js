@@ -110,7 +110,7 @@ const getProductCompany = asyncHandler(async(req, res) => {
         console.log(prd)
         return res.status(200).json(prd)
     }catch(err){
-        console.error(error);
+        console.error(err);
         return res.status(500).json({ error: 'Error adding the materials to Company' });
     }
 
