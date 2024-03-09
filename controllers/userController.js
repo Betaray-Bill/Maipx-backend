@@ -2,7 +2,7 @@ import asyncHandler from 'express-async-handler';
 import User from '../models/userModel.js';
 import generateToken from '../utils/generateToken.js';
 import { Company, CompanyEntity } from '../models/companyEntity.js';
-
+import bcrypt from 'bcryptjs';
 // login - POST - /login
 const login = asyncHandler(async(req, res) => {
     const { email, password, companyEntity } = req.body;
@@ -86,6 +86,12 @@ const updateUser = asyncHandler(async(req, res) => {
         throw new Error('User doesn\'\t exists');
     }
 
+    if (req.body.password) {
+        const saltRounds = 10; // Adjust salt rounds for security
+        const hashedPassword = await bcrypt.hash(req.body.password, saltRounds);
+        req.body.password = hashedPassword;
+    }
+
     try{
         const updateUser = await User.findByIdAndUpdate(
             id,
@@ -93,6 +99,7 @@ const updateUser = asyncHandler(async(req, res) => {
                 $set:req.body
             }
         )
+    
         res.status(200).json(updateUser);
     }catch(err){
         return res.status(500).json("Error in Updating User")
