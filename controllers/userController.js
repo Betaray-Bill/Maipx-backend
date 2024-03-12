@@ -12,10 +12,10 @@ const login = asyncHandler(async(req, res) => {
     if (user && (await user.matchPassword(password))) {
         generateToken(res, user._id);
 
-        const com = await CompanyEntity.findOne({name:companyEntity, users:user._id})
-        if(!com){
-            res.status(500).json("Enter Correct Company Entity")
-        }
+        // const com = await CompanyEntity.findOne({name:companyEntity, users:user._id})
+        // if(!com){
+        //     res.status(500).json("Enter Correct Company Entity")
+        // }
 
         res.status(200).json(user);
     } else {
@@ -27,7 +27,7 @@ const login = asyncHandler(async(req, res) => {
 
 // Register - POST - /register
 const register =asyncHandler(async(req, res) => {
-    const { name, email, password, phoneNumber, company, companyEntity } = req.body;
+    const { name, email, password, phoneNumber, company, companyEntity, isAdmin } = req.body;
 
     const userExists = await User.findOne({ email });
 
@@ -42,32 +42,50 @@ const register =asyncHandler(async(req, res) => {
         password:password,
         phoneNumber:phoneNumber,
         company:company,
-        companyEntity:companyEntity
+        companyEntity:companyEntity,
+        isAdmin
     });
     await user.save()
     console.log(user)
-    if (user) {
-        generateToken(res, user._id);
-
-        const companyName = await Company.find({name:company});
-        console.log(companyName[0].entities)
-        var userEntity = ''
-        
-        if(!companyName[0].entities.includes(companyEntity)){
-            res.status(500).json("COmpany Entity Not present in Company")
+    if(!isAdmin){
+        if (user) {
+            generateToken(res, user._id);
+    
+            const companyName = await Company.find({name:company});
+            console.log(companyName[0].entities)
+            var userEntity = ''
+            
+            if(!companyName[0].entities.includes(companyEntity)){
+                res.status(500).json("COmpany Entity Not present in Company")
+            }
+    
+            console.log("User Enty", companyEntity, userEntity)
+            // Add user to Company Entity
+            const cmpEnty = await CompanyEntity.findOne({name:companyEntity})
+            await cmpEnty.users.push(user.id);
+            await cmpEnty.save()        
+            console.log(cmpEnty)
+            res.status(200).json(user);
+        } else {
+            res.status(400);
+            throw new Error('Invalid user data');
         }
-
-        console.log("User Enty", companyEntity, userEntity)
-        // Add user to Company Entity
-        const cmpEnty = await CompanyEntity.findOne({name:companyEntity})
-        await cmpEnty.users.push(user.id);
-        await cmpEnty.save()        
-        console.log(cmpEnty)
-        res.status(200).json(user);
-    } else {
-        res.status(400);
-        throw new Error('Invalid user data');
+    }else{
+        if (user) {
+            generateToken(res, user._id);
+            var userEntity = ''
+            // Add user to Company Entity
+            const cmpEnty = await CompanyEntity.findOne({name:companyEntity})
+            await cmpEnty.users.push(user.id);
+            await cmpEnty.save()        
+            console.log(cmpEnty)
+            res.status(200).json(user);
+        } else {
+            res.status(400);
+            throw new Error('Invalid user data');
+        }
     }
+    
 })
 
 // SignOut - GET - /signout
@@ -79,31 +97,36 @@ const signout = asyncHandler(async(req, res) => {
 // Update User - PUT - /update/:id
 const updateUser = asyncHandler(async(req, res) => {
     const id = req.params.id;
-
-    const userExists = await User.findOne({ _id:id });
-    if (!userExists) {
-        res.status(400);
-        throw new Error('User doesn\'\t exists');
-    }
-
-    if (req.body.password) {
-        const saltRounds = 10; // Adjust salt rounds for security
-        const hashedPassword = await bcrypt.hash(req.body.password, saltRounds);
-        req.body.password = hashedPassword;
-    }
-
-    try{
-        const updateUser = await User.findByIdAndUpdate(
-            id,
-            {
-                $set:req.body
-            }
-        )
+    if(req.user._id === id){
+        const userExists = await User.findOne({ _id:id });
+        if (!userExists) {
+            res.status(400);
+            throw new Error('User doesn\'\t exists');
+        }
     
-        res.status(200).json(updateUser);
-    }catch(err){
-        return res.status(500).json("Error in Updating User")
+        if (req.body.password) {
+            const saltRounds = 10; // Adjust salt rounds for security
+            const hashedPassword = await bcrypt.hash(req.body.password, saltRounds);
+            req.body.password = hashedPassword;
+        }
+    
+        try{
+            const updateUser = await User.findByIdAndUpdate(
+                id,
+                {
+                    $set:req.body
+                }
+            )
+        
+            res.status(200).json(updateUser);
+        }catch(err){
+            return res.status(500).json("Error in Updating User")
+        }
+    }else{
+        res.status(500);
+        throw new Error('Invalid Authentication ');
     }
+    
 })
 
 

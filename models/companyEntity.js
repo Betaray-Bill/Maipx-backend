@@ -29,6 +29,29 @@ const companyEntity = mongoose.Schema(
                 type: String,
             }
         ], // Array of Materials name
+        location:{
+            type: String,
+            // required: true,
+        },
+        Address:{
+            type: String,
+            // required: true,
+        },
+        domain:{
+            type: String,
+        },
+        Webpage:{
+            type: String,
+        },
+        About:{
+            type:String,
+            // required: true, 
+            minLength: 255, 
+            maxLength: 500
+        },
+        Industry:{
+            type:String,
+        }
     },{
     timestamps:true
 })
@@ -37,10 +60,13 @@ const companyEntity = mongoose.Schema(
 const companySchema = new mongoose.Schema({
     name: {
       type: String,
-      required: true,
+    //   required: true,
     },
     entities: [
-       { type:String}
+       { 
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'CompanyEntity',
+       }
     ], // Array of sub-companies/entities
 });
   

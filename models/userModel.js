@@ -26,6 +26,11 @@ const userSchema = mongoose.Schema(
     companyEntity:{
       type:String,
       required:true
+    },
+    isAdmin:{
+      type:String,
+      required:true,
+      default:false
     }
   },
   {
